@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}BloodLink — Home{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="hero">
+    <h1>🩸 Donate Blood, Save Lives</h1>
+    <p>BloodLink connects blood donors with hospitals and patients in need across Nepal.</p>
+    <div class="hero-btns">
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary">Register as a Donor</a>
+            <a href="{% url 'login' %}" class="btn btn-outline">Login</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info Cards -->
+<div class="cards">
+    <div class="card">
+        <h3>🏥</h3>
+        <p><strong>Hospitals</strong></p>
+        <p>Hospitals post emergency blood requests that donors can respond to instantly.</p>
+    </div>
+    <div class="card">
+        <h3>💉</h3>
+        <p><strong>Donors</strong></p>
+        <p>Registered donors get notified when someone nearby needs their blood group.</p>
+    </div>
+    <div class="card">
+        <h3>⚡</h3>
+        <p><strong>Fast Response</strong></p>
+        <p>Critical and urgent requests are prioritized to save lives faster.</p>
+    </div>
+</div>
+
+{% endblock %}

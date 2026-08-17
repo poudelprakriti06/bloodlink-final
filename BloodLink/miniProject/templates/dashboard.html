@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Donor Dashboard — BloodLink{% endblock %}
+{% block content %}
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+  <h2>🩸 Donor Dashboard</h2>
+  <div class="page-header-actions">
+    <a href="{% url 'edit_profile' %}" class="btn btn-outline btn-sm">✏️ Edit Profile</a>
+    <a href="{% url 'donation_history' %}" class="btn btn-outline btn-sm">📋 Donation History</a>
+  </div>
+</div>
+
+<!-- ── Identity Card ── -->
+<div class="card identity-card">
+  <div class="identity-left">
+    {% if donor.profile_picture %}
+      <img src="{{ donor.profile_picture.url }}" alt="Profile" class="identity-avatar-img">
+    {% else %}
+      <div class="identity-avatar">{{ donor.user.first_name|first|upper|default:donor.user.username|first|upper }}</div>
+    {% endif %}
+    <div class="identity-info">
+      <strong class="identity-name">{{ donor.user.get_full_name|default:donor.user.username }}</strong>
+      <span class="identity-email">{{ donor.user.email }}</span>
+      <div class="identity-badges">
+        <span class="badge badge-accepted">{{ donor.blood_group }}</span>
+        <span class="badge {% if donor.is_available %}badge-completed{% else %}badge-cancelled{% endif %}">
+          {% if donor.is_available %}Available{% else %}Unavailable{% endif %}
+        </span>
+        {% if not is_eligible %}
+          <span class="badge badge-pending">Not Eligible — {{ days_until_eligible }} day{{ days_until_eligible|pluralize }} left</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <form method="POST" action="{% url 'toggle_availability' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm {% if donor.is_available %}btn-danger{% else %}btn-success{% endif %}">
+      {% if donor.is_available %}Mark Unavailable{% else %}Mark Available{% endif %}
+    </button>
+  </form>
+</div>
+
+<!-- ── Profile Details Card ── -->
+<div class="card profile-details-card">
+  <div class="profile-details-header">
+    <h3 class="profile-details-title">👤 Profile Details</h3>
+    <div class="page-header-actions">
+      <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+      <a href="{% url 'donation_history' %}" class="btn btn-outline btn-sm">📋 Donation History</a>
+    </div>
+  </div>
+  <div class="profile-details-grid">
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Phone</span>
+      <strong class="profile-detail-value">{{ donor.phone }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Gender</span>
+      <strong class="profile-detail-value">{{ donor.gender }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Date of Birth</span>
+      <strong class="profile-detail-value">{{ donor.date_of_birth }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">District</span>
+      <strong class="profile-detail-value">{{ donor.district }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Municipality</span>
+      <strong class="profile-detail-value">{{ donor.municipality|default:"—" }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Ward / Area</span>
+      <strong class="profile-detail-value">{{ donor.ward|default:"—" }}{% if donor.area %} / {{ donor.area }}{% endif %}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Last Donation</span>
+      <strong class="profile-detail-value">{{ donor.last_donation_date|default:"Never" }}</strong>
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Eligibility</span>
+      {% if is_eligible %}
+        <strong class="profile-detail-value eligible">✅ Eligible to donate</strong>
+      {% else %}
+        <strong class="profile-detail-value not-eligible">⏳ {{ days_until_eligible }} day{{ days_until_eligible|pluralize }} remaining</strong>
+      {% endif %}
+    </div>
+    <div class="profile-detail-item">
+      <span class="profile-detail-label">Total Donations</span>
+      <strong class="profile-detail-value">{{ total_donations }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ── Stats Cards ── -->
+<div class="stats-grid">
+  <div class="card stat-card">
+    <h3>{{ total_notifications }}</h3>
+    <p>Total Requests</p>
+  </div>
+  <div class="card stat-card stat-unread">
+    <h3>{{ unread_notifications }}</h3>
+    <p>Unread</p>
+  </div>
+  <div class="card stat-card stat-active">
+    <h3>{{ active_requests }}</h3>
+    <p>Active</p>
+  </div>
+  <div class="card stat-card stat-accepted">
+    <h3>{{ accepted_requests }}</h3>
+    <p>Accepted</p>
+  </div>
+  <div class="card stat-card stat-donated">
+    <h3>{{ total_donations }}</h3>
+    <p>Donations Made</p>
+  </div>
+  <div class="card stat-card stat-declined">
+    <h3>{{ declined_requests }}</h3>
+    <p>Declined</p>
+  </div>
+</div>
+
+<!-- ── Blood Request Cards ── -->
+{% if notifications %}
+  <h3 class="section-title">Blood Requests</h3>
+  {% for notification in notifications %}
+    <div class="card notif-card {% if notification.is_read %}notif-read{% endif %}">
+
+      <div class="notif-card-header">
+        <div class="request-badges">
+          <span class="badge badge-accepted badge-blood-group">{{ notification.blood_request.blood_group }}</span>
+          <span class="badge {% if notification.blood_request.urgency == 'Critical' %}badge-critical{% elif notification.blood_request.urgency == 'Urgent' %}badge-urgent{% else %}badge-normal{% endif %}">{{ notification.blood_request.urgency }}</span>
+          <span class="badge {% if notification.response == 'Accepted' %}badge-accepted{% elif notification.response == 'Completed' or notification.response == 'Received' %}badge-completed{% elif notification.response == 'Declined' %}badge-cancelled{% else %}badge-pending{% endif %}">{{ notification.response }}</span>
+          {% if notification.blood_request.status == 'Cancelled' %}
+            <span class="badge badge-cancelled">Request Cancelled</span>
+          {% endif %}
+        </div>
+        <span class="request-date">{{ notification.sent_at|date:"M d, Y H:i" }}</span>
+      </div>
+
+      <div class="request-details">
+        <p><strong>Hospital:</strong> {{ notification.blood_request.hospital }}</p>
+        <p><strong>Units Required:</strong> {{ notification.blood_request.units_required }}</p>
+        <p><strong>Location:</strong> {{ notification.blood_request.district }}{% if notification.blood_request.area %}, {{ notification.blood_request.area }}{% endif %}</p>
+        <p><strong>Required By:</strong> {{ notification.blood_request.required_date }}</p>
+      </div>
+
+      {% if notification.message %}
+        <p class="notif-message">{{ notification.message }}</p>
+      {% endif %}
+
+      <div class="notif-actions">
+        {% if notification.blood_request.status == 'Cancelled' %}
+          <span class="status-text status-cancelled">❌ This request was cancelled by the hospital.</span>
+
+        {% elif notification.response == "Pending" %}
+          {% if not is_eligible %}
+            <span class="status-text status-ineligible">🚫 Not eligible — {{ days_until_eligible }} day{{ days_until_eligible|pluralize }} remaining before next donation.</span>
+          {% else %}
+            <form method="POST" action="{% url 'accept_blood_request' notification.blood_request.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+            </form>
+            <form method="POST" action="{% url 'decline_blood_request' notification.blood_request.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+            </form>
+          {% endif %}
+
+        {% elif notification.response == "Accepted" %}
+          <form method="POST" action="{% url 'complete_donation' notification.blood_request.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm">🩸 Mark Donation Complete</button>
+          </form>
+
+        {% elif notification.response == "Completed" %}
+          <span class="status-text status-completed">⏳ Waiting for hospital confirmation</span>
+
+        {% elif notification.response == "Received" %}
+          <span class="status-text status-received">✅ Donation confirmed by hospital</span>
+
+        {% elif notification.response == "Declined" %}
+          <span class="status-text status-declined">You declined this request</span>
+
+        {% endif %}
+      </div>
+
+    </div>
+  {% endfor %}
+
+{% else %}
+  <div class="card no-requests-box">
+    <p>No blood requests at the moment.</p>
+    <p class="sub">You'll be notified when a matching request is posted nearby.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

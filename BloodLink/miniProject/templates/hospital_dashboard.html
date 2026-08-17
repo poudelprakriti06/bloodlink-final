@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% block title %}Hospital Dashboard — BloodLink{% endblock %}
+{% block content %}
+
+<!-- ── Remove Donor Modal ── -->
+<div id="removeDonorModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2 class="modal-title-danger">🚫 Remove Donor</h2>
+    <p>Are you sure you want to remove this donor from the request? They will be freed and marked as available again.</p>
+    <div class="modal-actions">
+      <button onclick="closeRemoveDonorModal()" class="btn btn-outline">Go Back</button>
+      <button onclick="submitRemoveDonor()" class="btn btn-danger">Yes, Remove Donor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Blood Request Modal ── -->
+<div id="requestModal" class="modal-overlay modal-top">
+  <div class="modal-box-wide">
+    <div class="modal-header">
+      <h2>🩸 New Blood Request</h2>
+      <button onclick="closeModal()" class="modal-close-btn">✕</button>
+    </div>
+    <div id="modalAlert" style="display:none;" class="alert"></div>
+    <form id="bloodRequestForm">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="form-group">
+          <label>Blood Group</label>
+          <select name="blood_group" required>
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+            <option>O+</option><option>O-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Urgency</label>
+          <select name="urgency" required>
+            <option value="Normal">Normal</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Units Required</label>
+          <input type="number" name="units_required" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Required Date</label>
+          <input type="date" name="required_date" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>District</label>
+        <select name="district" required>
+          <option value="">Select District</option>
+          <option>Achham</option><option>Arghakhanchi</option><option>Baglung</option>
+          <option>Baitadi</option><option>Bajhang</option><option>Bajura</option>
+          <option>Banke</option><option>Bara</option><option>Bardiya</option>
+          <option>Bhaktapur</option><option>Bhojpur</option><option>Chitwan</option>
+          <option>Dadeldhura</option><option>Dailekh</option><option>Dang</option>
+          <option>Darchula</option><option>Dhading</option><option>Dhankuta</option>
+          <option>Dhanusha</option><option>Dolakha</option><option>Dolpa</option>
+          <option>Doti</option><option>Eastern Rukum</option><option>Gorkha</option>
+          <option>Gulmi</option><option>Humla</option><option>Ilam</option>
+          <option>Jajarkot</option><option>Jhapa</option><option>Jumla</option>
+          <option>Kailali</option><option>Kalikot</option><option>Kanchanpur</option>
+          <option>Kapilvastu</option><option>Kaski</option><option>Kathmandu</option>
+          <option>Kavrepalanchok</option><option>Khotang</option><option>Lalitpur</option>
+          <option>Lamjung</option><option>Mahottari</option><option>Makwanpur</option>
+          <option>Manang</option><option>Morang</option><option>Mugu</option>
+          <option>Mustang</option><option>Myagdi</option><option>Nawalpur</option>
+          <option>Nuwakot</option><option>Okhaldhunga</option><option>Palpa</option>
+          <option>Panchthar</option><option>Parbat</option><option>Parsa</option>
+          <option>Pyuthan</option><option>Ramechhap</option><option>Rasuwa</option>
+          <option>Rautahat</option><option>Rolpa</option><option>Rupandehi</option>
+          <option>Salyan</option><option>Sankhuwasabha</option><option>Saptari</option>
+          <option>Sarlahi</option><option>Sindhuli</option><option>Sindhupalchok</option>
+          <option>Siraha</option><option>Solukhumbu</option><option>Sunsari</option>
+          <option>Surkhet</option><option>Syangja</option><option>Tanahun</option>
+          <option>Taplejung</option><option>Terhathum</option><option>Udayapur</option>
+          <option>Western Rukum</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Municipality</label>
+          <input type="text" name="municipality" placeholder="e.g. Kathmandu Metropolitan City">
+        </div>
+        <div class="form-group">
+          <label>Ward</label>
+          <input type="number" name="ward" min="1" max="35" placeholder="e.g. 10">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Area</label>
+        <input type="text" name="area" placeholder="e.g. New Baneshwor">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contact Person</label>
+          <input type="text" name="contact_person" required>
+        </div>
+        <div class="form-group">
+          <label>Contact Number</label>
+          <input type="text" name="contact_number" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Any additional information..."></textarea>
+      </div>
+      <div class="modal-form-actions">
+        <button type="submit" class="btn btn-primary form-submit" id="submitBtn">Submit Request</button>
+        <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Confirm Blood Received Modal ── -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2 class="modal-title-red">🩸 Confirm Blood Received</h2>
+    <p>Are you sure you have received the blood from this donor?</p>
+    <div class="modal-actions">
+      <button onclick="closeConfirmModal()" class="btn btn-outline">Cancel</button>
+      <button onclick="submitConfirmation()" class="btn btn-success">✅ Yes, Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ── -->
+<div id="deleteModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2 class="modal-title-danger">❌ Delete Request</h2>
+    <p>Are you sure you want to delete this blood request? This cannot be undone.</p>
+    <div class="modal-actions">
+      <button onclick="closeDeleteModal()" class="btn btn-outline">Cancel</button>
+      <button onclick="submitDelete()" class="btn btn-danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+  <h2>🏥 Hospital Dashboard</h2>
+  <button onclick="openModal()" class="btn btn-primary">+ New Blood Request</button>
+</div>
+
+<p class="hosp-welcome">
+  Welcome, <strong>{{ hospital.hospital_name }}</strong>
+  <span class="badge badge-accepted">{{ hospital.district }}</span>
+</p>
+
+<!-- ── Stats ── -->
+<div class="cards">
+  <div class="card">
+    <h3>{{ total_count }}</h3>
+    <p>Total Requests</p>
+  </div>
+  <div class="card card-warning">
+    <h3>{{ active_count }}</h3>
+    <p>Active</p>
+  </div>
+  <div class="card card-success">
+    <h3>{{ fulfilled_count }}</h3>
+    <p>Fulfilled</p>
+  </div>
+</div>
+
+<!-- ── Show/Hide Fulfilled Toggle ── -->
+{% if fulfilled_count > 0 %}
+<div class="toggle-wrap">
+  <button onclick="toggleFulfilled()" id="toggleBtn" class="btn btn-outline btn-sm">Show Fulfilled Requests</button>
+</div>
+{% endif %}
+
+<!-- ── Blood Request Cards ── -->
+{% if request_data %}
+  {% for item in request_data %}
+    {% with br=item.blood_request %}
+    <div class="card request-card {% if br.status == 'Fulfilled' %}fulfilled-card{% endif %}">
+
+      <!-- Request Header -->
+      <div class="request-header">
+        <div class="request-badges">
+          <span class="badge badge-accepted badge-blood-group">{{ br.blood_group }}</span>
+          <span class="badge {% if br.urgency == 'Critical' %}badge-critical{% elif br.urgency == 'Urgent' %}badge-urgent{% else %}badge-normal{% endif %}">{{ br.urgency }}</span>
+          <span class="badge {% if br.status == 'Fulfilled' %}badge-completed{% elif br.status == 'Cancelled' %}badge-cancelled{% else %}badge-pending{% endif %}">{{ br.status }}</span>
+        </div>
+        <div class="request-actions">
+          <span class="request-date">{{ br.created_at|date:"M d, Y H:i" }}</span>
+          <form method="POST" action="{% url 'delete_blood_request' br.id %}" class="delete-form">
+            {% csrf_token %}
+            <button type="button" class="btn btn-outline btn-sm delete-trigger" title="Delete request">❌ Delete</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Request Details -->
+      <div class="request-details">
+        <p><strong>Units Required:</strong> {{ br.units_required }}</p>
+        <p><strong>Units Fulfilled:</strong> {{ br.units_fulfilled }}</p>
+        <p><strong>Units Remaining:</strong> {{ br.units_remaining }}</p>
+        <p><strong>Required By:</strong> {{ br.required_date }}</p>
+        <p><strong>Contact:</strong> {{ br.contact_person }}</p>
+        <p><strong>Phone:</strong> {{ br.contact_number }}</p>
+        <p class="full-col"><strong>Location:</strong>
+          {{ br.district }}{% if br.municipality %}, {{ br.municipality }}{% endif %}{% if br.ward %}, Ward {{ br.ward }}{% endif %}{% if br.area %}, {{ br.area }}{% endif %}
+        </p>
+      </div>
+
+      {% if br.notes %}
+        <p class="request-notes">📝 {{ br.notes }}</p>
+      {% endif %}
+
+      <!-- Progress Bar -->
+      {% if br.units_required > 0 %}
+        {% widthratio br.units_fulfilled br.units_required 100 as pct %}
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Fulfillment Progress</span>
+            <span>{{ br.units_fulfilled }}/{{ br.units_required }} units</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar {% if br.status == 'Fulfilled' %}fulfilled{% endif %}" style="width:{{ pct }}%;"></div>
+          </div>
+        </div>
+      {% endif %}
+
+      <hr class="section-divider">
+
+      <!-- Donors Section -->
+      <h4 class="donors-heading">👥 Donors
+        <span>({{ item.notifications|length }} notified)</span>
+      </h4>
+
+      {% if item.notifications %}
+        {% for notif in item.notifications %}
+          <div class="donor-card {% if notif.response == 'Received' %}status-received{% elif notif.response == 'Completed' %}status-completed{% elif notif.response == 'Accepted' %}status-accepted{% elif notif.response == 'Declined' %}status-declined{% endif %}">
+
+            <div class="donor-card-header">
+              <strong class="donor-name">
+                {% if notif.donor.user.first_name %}{{ notif.donor.user.first_name }} {{ notif.donor.user.last_name }}{% else %}{{ notif.donor.user.username }}{% endif %}
+              </strong>
+              <span class="badge {% if notif.response == 'Accepted' %}badge-accepted{% elif notif.response == 'Completed' or notif.response == 'Received' %}badge-completed{% elif notif.response == 'Declined' %}badge-cancelled{% else %}badge-pending{% endif %}">
+                {{ notif.response }}
+              </span>
+            </div>
+
+            <div class="donor-details">
+              <p><strong>Blood Group:</strong> <span class="badge badge-accepted">{{ notif.donor.blood_group }}</span></p>
+              <p><strong>Phone:</strong> {{ notif.donor.phone }}</p>
+              <p><strong>Email:</strong> {{ notif.donor.user.email|default:"—" }}</p>
+              <p><strong>District:</strong> {{ notif.donor.district }}</p>
+              {% if notif.donor.area %}<p><strong>Area:</strong> {{ notif.donor.area }}</p>{% endif %}
+            </div>
+
+            {% if notif.response == "Completed" %}
+              <div class="donor-confirm-wrap">
+                <form method="POST" action="{% url 'confirm_blood_received' br.id %}" class="confirm-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="notification_id" value="{{ notif.id }}">
+                  <button type="button" class="btn btn-success btn-sm confirm-trigger">✅ Confirm Blood Received</button>
+                </form>
+              </div>
+            {% elif notif.response == "Received" %}
+              <p class="donor-status-msg msg-received">🟢 Blood received and confirmed.</p>
+            {% elif notif.response == "Accepted" %}
+              <div class="donor-status-row">
+                <p class="donor-status-msg msg-accepted">🟡 Donor accepted — waiting for donation completion.</p>
+                <form method="POST" action="{% url 'remove_donor' notif.id %}" class="remove-donor-form">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-danger btn-sm remove-donor-trigger">🚫 Remove</button>
+                </form>
+              </div>
+            {% elif notif.response == "Declined" %}
+              <p class="donor-status-msg msg-declined">❌ Donor declined.</p>
+            {% elif notif.response == "Pending" %}
+              <p class="donor-status-msg msg-pending">⏳ Waiting for donor response.</p>
+            {% endif %}
+
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="donor-status-msg msg-pending">No donors have responded yet.</p>
+      {% endif %}
+
+    </div>
+    {% endwith %}
+  {% endfor %}
+
+{% else %}
+  <div class="card no-requests-box">
+    <p>No blood requests yet.</p>
+    <p class="sub">Click <strong>+ New Blood Request</strong> to post one.</p>
+  </div>
+{% endif %}
+
+<script>
+// ── New request modal ──
+function openModal() {
+  document.getElementById('requestModal').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('requestModal').style.display = 'none';
+  document.getElementById('bloodRequestForm').reset();
+  const a = document.getElementById('modalAlert');
+  a.style.display = 'none';
+}
+
+document.getElementById('bloodRequestForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('submitBtn');
+  const alertBox = document.getElementById('modalAlert');
+  const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  const data = {
+    hospital: {{ hospital.id }},
+    blood_group: form.blood_group.value,
+    urgency: form.urgency.value,
+    units_required: parseInt(form.units_required.value),
+    required_date: form.required_date.value,
+    district: form.district.value,
+    municipality: form.municipality.value || null,
+    ward: form.ward.value ? parseInt(form.ward.value) : null,
+    area: form.area.value || null,
+    contact_person: form.contact_person.value,
+    contact_number: form.contact_number.value,
+    notes: form.notes.value || '',
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  fetch('/blood-requests/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+    body: JSON.stringify(data),
+  })
+  .then(res => res.json().then(json => ({ status: res.status, json })))
+  .then(({ status, json }) => {
+    if (status === 201) {
+      alertBox.className = 'alert alert-success';
+      alertBox.textContent = '✅ Blood request created! Donors are being notified.';
+      alertBox.style.display = 'block';
+      setTimeout(() => { closeModal(); location.reload(); }, 1800);
+    } else {
+      const errors = Object.entries(json).map(([k, v]) => `${k}: ${v}`).join(' | ');
+      alertBox.className = 'alert alert-error';
+      alertBox.textContent = '❌ ' + errors;
+      alertBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Request';
+    }
+  })
+  .catch(() => {
+    alertBox.className = 'alert alert-error';
+    alertBox.textContent = '❌ Network error. Please try again.';
+    alertBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Submit Request';
+  });
+});
+
+// ── Remove donor modal ──
+let selectedRemoveDonorForm = null;
+document.querySelectorAll('.remove-donor-trigger').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectedRemoveDonorForm = btn.closest('form');
+    document.getElementById('removeDonorModal').style.display = 'flex';
+  });
+});
+function closeRemoveDonorModal() {
+  document.getElementById('removeDonorModal').style.display = 'none';
+  selectedRemoveDonorForm = null;
+}
+function submitRemoveDonor() {
+  if (selectedRemoveDonorForm) selectedRemoveDonorForm.submit();
+}
+
+// ── Confirm blood received modal ──
+let selectedConfirmForm = null;
+document.querySelectorAll('.confirm-trigger').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectedConfirmForm = btn.closest('form');
+    document.getElementById('confirmModal').style.display = 'flex';
+  });
+});
+function closeConfirmModal() {
+  document.getElementById('confirmModal').style.display = 'none';
+  selectedConfirmForm = null;
+}
+function submitConfirmation() {
+  if (selectedConfirmForm) selectedConfirmForm.submit();
+}
+
+// ── Delete modal ──
+let selectedDeleteForm = null;
+document.querySelectorAll('.delete-trigger').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectedDeleteForm = btn.closest('form');
+    document.getElementById('deleteModal').style.display = 'flex';
+  });
+});
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  selectedDeleteForm = null;
+}
+function submitDelete() {
+  if (selectedDeleteForm) selectedDeleteForm.submit();
+}
+
+// ── Toggle fulfilled requests ──
+let fulfilledVisible = false;
+function toggleFulfilled() {
+  fulfilledVisible = !fulfilledVisible;
+  document.querySelectorAll('.fulfilled-card').forEach(function(card) {
+    card.style.display = fulfilledVisible ? 'block' : 'none';
+  });
+  document.getElementById('toggleBtn').textContent = fulfilledVisible
+    ? 'Hide Fulfilled Requests'
+    : 'Show Fulfilled Requests';
+}
+
+// ── Backdrop click to close ──
+['requestModal', 'confirmModal', 'deleteModal', 'removeDonorModal'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      if (id === 'requestModal') closeModal();
+      else if (id === 'confirmModal') closeConfirmModal();
+      else if (id === 'removeDonorModal') closeRemoveDonorModal();
+      else closeDeleteModal();
+    }
+  });
+});
+</script>
+
+{% endblock %}

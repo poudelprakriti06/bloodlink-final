@@ -1,0 +1,33 @@
+<!-- bloodbank/templates/bloodbank/stock_list.html -->
+{% extends 'base.html' %}  <!-- CHANGE THIS to your existing base template path -->
+{% block title %}Blood Bank Stock{% endblock %}
+
+{% block content %}  <!-- Use the same block names as your existing base -->
+<div class="container mt-4">
+    <h2>📊 Combined Blood Stock Dashboard</h2>
+    <a href="{% url 'bloodbank:add_stock' %}" class="btn btn-primary btn-sm">Add Stock</a>
+    <a href="{% url 'bloodbank:request_blood' %}" class="btn btn-warning btn-sm">Request Blood</a>
+    <a href="{% url 'bloodbank:import_legacy' %}" class="btn btn-secondary btn-sm">Import Legacy</a>
+    <hr>
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Group</th><th>New Qty</th><th>Legacy Qty</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+            {% for stock in combined_stock %}
+            <tr>
+                <td><strong>{{ stock.blood_group }}</strong></td>
+                <td>{{ stock.new_qty }}</td>
+                <td><span class="badge bg-secondary">{{ stock.legacy_qty }}</span></td>
+                <td><span class="badge bg-success">{{ stock.total_qty }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No stock available.</td></tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="table-dark"><td colspan="3">Grand Total</td><td><strong>{{ total_units }}</strong></td></tr>
+        </tfoot>
+    </table>
+</div>
+{% endblock %}

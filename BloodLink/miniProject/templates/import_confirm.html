@@ -1,0 +1,12 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Import Legacy Data</h2>
+    <p>This will import legacy records into your NEW BloodStock.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Yes, Import All</button>
+        <a href="{% url 'bloodbank:stock_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

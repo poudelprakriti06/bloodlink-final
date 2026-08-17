@@ -1,0 +1,24 @@
+Dear {{ donor.user.username }},
+
+A blood request matches your donor profile.
+
+Blood Group: {{ blood_request.blood_group }}
+Hospital: {{ blood_request.hospital.hospital_name }}
+District: {{ blood_request.district }}
+Units Required: {{ blood_request.units_required }}
+Required Date: {{ blood_request.required_date }}
+Urgency: {{ blood_request.urgency }}
+
+You are receiving this email because:
+
+✔ Your blood group matches.
+✔ You are marked as available.
+✔ You are eligible to donate.
+
+If you are available, please log in to BloodLink and respond to this request.
+
+Open your donor dashboard here:
+{{ dashboard_url }}
+
+Thank you,
+BloodLink Team

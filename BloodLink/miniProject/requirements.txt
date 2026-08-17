@@ -1,0 +1,11 @@
+Django==4.2.30
+djangorestframework==3.17.1
+djangorestframework_simplejwt==5.5.1
+python-dotenv==1.2.2
+django-axes==7.0.1
+mysqlclient==2.2.8
+Pillow==12.3.0
+geopy==2.5.0
+asgiref==3.11.1
+sqlparse==0.5.5
+tzdata==2026.2

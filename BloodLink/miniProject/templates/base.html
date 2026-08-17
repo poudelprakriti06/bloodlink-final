@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BloodLink{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}?v=7">
+</head>
+<body>
+
+<nav>
+  <a href="{% url 'home' %}" class="brand">Blood<span>Link</span></a>
+  <ul>
+    {% if user.is_authenticated %}
+      <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+      {% if user.profile.role == 'donor' %}
+        {# <li><a href="{% url 'donor_profile' %}">My Profile</a></li> #}
+        {# <li><a href="{% url 'blood_request_list' %}">Find Requests</a></li> #}
+        {# <li><a href="{% url 'notifications' %}">Notifications</a></li> #}
+      {% elif user.profile.role == 'hospital' %}
+        {# <li><a href="{% url 'hospital_profile' %}">My Profile</a></li> #}
+        {# <li><a href="{% url 'blood_request_list' %}">Requests</a></li> #}
+        {# <li><a href="{% url 'create_blood_request' %}">+ New Request</a></li> #}
+      {% endif %}
+      <li>
+        <form method="POST" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-nav">Logout</button>
+        </form>
+      </li>
+    {% else %}
+      <li><a href="{% url 'login' %}">Login</a></li>
+      <li><a href="{% url 'hospital_login' %}">Hospital Login</a></li>
+      <li><a href="{% url 'register' %}" class="btn-nav">Register</a></li>
+    {% endif %}
+  </ul>
+</nav>
+
+<main>
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  <p>&copy; 2026 BloodLink — Connecting Donors &amp; Hospitals in Nepal</p>
+</footer>
+
+</body>
+</html>
