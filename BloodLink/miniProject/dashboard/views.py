@@ -4,6 +4,28 @@ from notifications.models import Notification
 from donors.models import Donation
 
 
+BADGE_CATALOG = [
+    {
+        'key': 'first_timer',
+        'name': 'First Timer',
+        'description': 'Completed your first blood donation.',
+        'icon': '🎉',
+    },
+    {
+        'key': 'gallon_grad',
+        'name': 'Gallon Grad',
+        'description': 'Reached 8 pints / 1 gallon donated.',
+        'icon': '🏆',
+    },
+    {
+        'key': 'decade_donor',
+        'name': 'Decade Donor',
+        'description': 'Donated for 10+ years of support.',
+        'icon': '🏅',
+    },
+]
+
+
 @login_required
 def dashboard(request):
     if hasattr(request.user, 'hospital_profile'):
@@ -65,6 +87,15 @@ def dashboard(request):
         response__in=['Declined', 'Received']
     ).count()
 
+    donations = Donation.objects.filter(donor=donor).select_related('blood_request').order_by('-donation_date', '-created_at')
+    earned_badges = set(donor.badges.values_list('badge_key', flat=True))
+    badge_cards = []
+    for badge in BADGE_CATALOG:
+        badge_cards.append({
+            **badge,
+            'earned': badge['key'] in earned_badges,
+        })
+
     return render(
         request,
         'dashboard.html',
@@ -81,6 +112,9 @@ def dashboard(request):
             'declined_requests': declined_requests,
             'total_donations': total_donations,
             'active_requests': active_requests,
+            'donations': donations,
+            'badge_cards': badge_cards,
+            'earned_badges': donor.badges.all(),
 
             # Donor information
             'donor': donor,

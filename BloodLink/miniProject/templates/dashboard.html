@@ -122,6 +122,69 @@
   </div>
 </div>
 
+<!-- ── Blood Journey Tracker ── -->
+<div class="card journey-panel">
+  <div class="panel-header">
+    <h3>🩸 Blood Journey Tracker</h3>
+    <span class="badge badge-accepted">{{ total_donations }} donation{{ total_donations|pluralize }}</span>
+  </div>
+
+  {% if donations %}
+    {% for donation in donations|slice:":3" %}
+      <div class="journey-card">
+        <div class="journey-top-row">
+          <div>
+            <strong>Batch {{ donation.batch_code|default:"—" }}</strong>
+            <p>{{ donation.hospital_name }} • {{ donation.donation_date }}</p>
+          </div>
+          <span class="badge badge-{{ donation.status }}">{{ donation.get_status_display }}</span>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" style="width: {{ donation.progress_percentage }}%"></div>
+        </div>
+
+        <div class="journey-steps">
+          {% for step in donation.journey_steps %}
+            <div class="journey-step {% if step.done %}done{% endif %}">
+              <span class="step-dot"></span>
+              <small>{{ step.label }}</small>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if donation.destination_hospital %}
+          <p class="destination-note">Destination: {{ donation.destination_hospital }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty-state">No donation batches have been recorded yet.</p>
+  {% endif %}
+</div>
+
+<!-- ── Badge Trophy Case ── -->
+<div class="card badge-panel">
+  <div class="panel-header">
+    <h3>🏅 Achievement Badges</h3>
+    <span class="badge badge-completed">{{ earned_badges|length }} earned</span>
+  </div>
+  <div class="badge-grid">
+    {% for badge in badge_cards %}
+      <div class="badge-item {% if badge.earned %}earned{% else %}locked{% endif %}">
+        <div class="badge-icon">{{ badge.icon }}</div>
+        <strong>{{ badge.name }}</strong>
+        <span>{{ badge.description }}</span>
+        {% if badge.earned %}
+          <small>Claimed</small>
+        {% else %}
+          <small>Locked</small>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
 <!-- ── Blood Request Cards ── -->
 {% if notifications %}
   <h3 class="section-title">Blood Requests</h3>
